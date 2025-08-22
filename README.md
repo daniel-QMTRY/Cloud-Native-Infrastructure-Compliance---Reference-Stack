@@ -42,48 +42,47 @@
 
 ## Architecture
 
-%%{init: {'theme':'dark','themeVariables': {
-  'primaryColor': '#0f172a',
-  'primaryTextColor': '#e5e7eb',
-  'lineColor': '#94a3b8',
-  'fontSize': '12px'
-}} }%%
+```mermaid
+
 flowchart LR
-  %% ---- Reusable styles ----
-  classDef cylinder fill:#1f2937,stroke:#93c5fd,color:#e5e7eb,stroke-width:1.6px;  %% high-contrast cylinders
-  classDef proc     fill:#111827,stroke:#94a3b8,color:#e5e7eb;
-  classDef accent   fill:#0b1324,stroke:#a78bfa,color:#e5e7eb,stroke-width:1.4px;
 
-  %% ---- Build & CI ----
-  subgraph Build & CI
-    Dev[Podman/Buildah]:::proc --> Img[Container Image]:::proc
-    CI[GitHub Actions\nCI Pipeline]:::accent
-    Policy[OPA/Conftest\nCheckov]:::proc --> Evidence[(evidence/*.json)]:::cylinder
-    SecScan[Trivy/Grype\nBandit/Gitleaks\nSyft SBOM]:::proc --> Evidence
-    Img -. scan image .-> SecScan
-    CI --> Policy
-    CI --> SecScan
-  end
+%% ===== Build & CI =====
+subgraph CI[Build & CI]
+  Dev[Podman/Buildah] --> Img[Container Image]
+  CIpipe[GitHub Actions CI]
+  Policy[OPA/Conftest & Checkov] --> Evidence[(evidence/*.json)]
+  SecScan[Trivy/Grype\nBandit/Gitleaks\nSyft SBOM] --> Evidence
+  Img -. "scan image" .-> SecScan
+  CIpipe --> Policy
+  CIpipe --> SecScan
+end
 
-  %% ---- Infrastructure ----
-  subgraph Infrastructure
-    IaC[Terraform]:::proc -->|plan/apply| Cloud[(LocalStack/AWS)]:::cylinder
-  end
+%% ===== Infrastructure =====
+subgraph Infra[Infrastructure]
+  IaC[Terraform] -->|plan/apply| Cloud[(LocalStack/AWS)]
+end
 
-  %% ---- Data ----
-  subgraph Data
-    Couch[(Couchbase / Capella)]:::cylinder
-  end
+%% ===== Data =====
+subgraph Data
+  Couch[(Couchbase / Capella)]
+end
 
-  %% ---- App Layer ----
-  subgraph App Layer
-    App[Streamlit Evidence\nDashboard]:::accent
-  end
+%% ===== App Layer =====
+subgraph App[App Layer]
+  AppUI[Streamlit Evidence Dashboard]
+end
 
-  %% ---- Flow ----
-  Evidence --> App
-  Couch --> App
-  App -->|Ingress| K8s[(Kubernetes\ncontainerd + Cilium + ingress-nginx)]:::cylinder
-  Kata[(Kata Containers)]:::proc --- K8s
-  K8s --> Logs[(Loki/Grafana)]:::cylinder
+%% ===== Flows =====
+Evidence --> AppUI
+Couch --> AppUI
+AppUI -->|Ingress| K8s[(Kubernetes\ncontainerd + Cilium + ingress-nginx)]
+Kata[Kata Containers] --- K8s
+K8s --> Logs[(Loki/Grafana)]
+
+%% ===== Readable cylinder styles (dark/light friendly) =====
+style Evidence fill:#1f2937,stroke:#93c5fd,stroke-width:1.6px,color:#eef2ff
+style Cloud    fill:#1f2937,stroke:#93c5fd,stroke-width:1.6px,color:#eef2ff
+style Couch    fill:#1f2937,stroke:#93c5fd,stroke-width:1.6px,color:#eef2ff
+style K8s      fill:#1f2937,stroke:#93c5fd,stroke-width:1.6px,color:#eef2ff
+style Logs     fill:#1f2937,stroke:#93c5fd,stroke-width:1.6px,color:#eef2ff
 
